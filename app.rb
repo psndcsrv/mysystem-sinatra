@@ -1,8 +1,19 @@
 require 'rubygems'
 require 'sinatra'
 
-# really long require, but it's the way it seems to work
-require 'lib/bumble/bumble/bumble.rb'
+begin
+  # really long require, but it's the way it seems to work
+  require 'lib/bumble/bumble/bumble.rb'
+  class MySystemModel
+    include Bumble
+    ds :content, :key
+  end
+rescue NameError
+  # we're not running under the Google App Engine...
+  puts "Not GAE"
+  require 'lib/local.rb'
+end
+
 
 class CustID
   VALS = (0..9).collect{|n| "#{n}"} + (65..90).collect{|n| n.chr}
@@ -14,11 +25,6 @@ class CustID
     end
     return id
   end
-end
-
-class MySystemModel
-  include Bumble
-  ds :content, :key
 end
 
 mime :json, "application/json"
@@ -56,7 +62,9 @@ get '/models/:key' do
   if myModel
     myModel.content
   else
-    not_found
+    not_found do
+      "{}"
+    end
   end
 end
 
@@ -68,6 +76,8 @@ put '/models/:key' do
     myModel.save!
     "{ key: \"#{myModel.key}\" }"
   else
-    not_found
+    not_found do
+      "{}"
+    end
   end
 end
