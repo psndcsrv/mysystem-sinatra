@@ -28,6 +28,10 @@ def raw_post
   request.env["rack.input"].read
 end
 
+get '/' do
+  redirect '/mysystem-demo.html'
+end
+
 get '/models' do
   content_type :json
   models = MySystemModel.all
