@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'sinatra'
-require 'lib/bumble/bumble.rb'
+
+# really long require, but it's the way it seems to work
+require 'lib/bumble/bumble/bumble.rb'
 
 class CustID
   VALS = (0..9).collect{|n| "#{n}"} + (65..90).collect{|n| n.chr}
