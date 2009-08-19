@@ -1,13 +1,6 @@
-require 'rubygems'
-require 'sinatra'
- 
-root_dir = File.dirname(__FILE__)
- 
-set :environment, :production
-set :root, root_dir
-set :app_file, File.join(root_dir, 'app.rb')
-disable :run
- 
+require 'appengine-rack'
+AppEngine::Rack.configure_app(
+  :application => 'ccmysystem',
+  :version => 2)
 require 'app'
- 
 run Sinatra::Application
