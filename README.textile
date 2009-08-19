@@ -1,0 +1,23 @@
+h1. MySystem-Sinatra
+
+This is a simple server container / backend for the mysystem pre-prototype demo.
+It uses google app engine, and DataMapper.
+
+
+h2. Dependencies
+
+Uses "Google App Engine":http://rails-primer.appspot.com/  Gem: 
+sudo gem install google-appengine
+
+Uses "DataMapper":http://datamapper.org/
+
+
+h2. Info
+
+Gems installed using 'appcfg.rb gem install sinatra dm-appengine' are checked into github. (these gems are local in ./.gems/gems/)
+
+# install the google-appengine gem : sudo gem install google-appengine
+# Follow opther instructions at http://code.google.com/p/appengine-jruby/wiki/GettingStarted
+# try out the app with ruby ./app.rb  or at the console with irb require 'config'
+# run in developer mode with "dev_appserver.rb ." (intsalled with google-appengine gem)
+# deploy the application with "appcfg.rb update ."
