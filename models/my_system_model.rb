@@ -1,5 +1,3 @@
-require 'dm-core'
-require 'lib/util.rb'
 
 DataMapper::Logger.new(STDOUT, :debug) # :off, :fatal, :error, :warn, :info, :debug
 

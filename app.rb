@@ -1,13 +1,8 @@
-require 'rubygems'
+require 'config'
 require 'sinatra'
-require 'dm-core'
-require 'lib/util.rb'
-require 'lib/config'
-require 'models/my_system_model.rb'
 
 # SET MIME_TYPES HERE:
 mime :json, "application/json"
-
 
 get '/' do
   redirect '/mysystem-demo.html'
