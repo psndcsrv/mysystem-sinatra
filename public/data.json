@@ -1,0 +1,257 @@
+[
+
+    *
+      -
+      {
+          o
+            -
+            containers: [
+                +
+                  -
+                  {
+                      #
+                        -
+                        terminals: [
+                            *
+                              -
+                              {
+                                  o
+                                    -
+                                    wireConfig: {
+                                        + drawingMethod: "bezierArrows"
+                                    }
+                                  o name: "Terminal1"
+                                  o
+                                    -
+                                    direction: [
+                                        + 0
+                                        + -1
+                                    ]
+                                  o
+                                    -
+                                    offsetPosition: {
+                                        + left: 20
+                                        + top: -25
+                                    }
+                                  o
+                                    -
+                                    ddConfig: {
+                                        + type: "input"
+                                        +
+                                          -
+                                          allowedTypes: [
+                                              # "input"
+                                              # "output"
+                                          ]
+                                    }
+                              }
+                            *
+                              -
+                              {
+                                  o
+                                    -
+                                    wireConfig: {
+                                        + drawingMethod: "bezierArrows"
+                                    }
+                                  o name: "Terminal2"
+                                  o
+                                    -
+                                    direction: [
+                                        + 0
+                                        + 1
+                                    ]
+                                  o
+                                    -
+                                    offsetPosition: {
+                                        + left: 20
+                                        + bottom: -25
+                                    }
+                                  o
+                                    -
+                                    ddConfig: {
+                                        + type: "output"
+                                        +
+                                          -
+                                          allowedTypes: [
+                                              # "input"
+                                              # "output"
+                                          ]
+                                    }
+                              }
+                        ]
+                      # draggable: true
+                      #
+                        -
+                        position: [
+                            * "191px"
+                            * "67px"
+                        ]
+                      # className: "WireIt-Container WireIt-ImageContainer"
+                      # ddHandle: false
+                      # ddHandleClassName: "WireIt-Container-ddhandle"
+                      # resizable: false
+                      # resizeHandleClassName: "WireIt-Container-resizehandle"
+                      # close: true
+                      # closeButtonClassName: "WireIt-Container-closebutton"
+                      # title: "table"
+                      # icon: "./images/thermodynamics/table.png"
+                      # preventSelfWiring: true
+                      # image: "./images/thermodynamics/table.png"
+                      # xtype: "MySystemContainer"
+                      #
+                        -
+                        fields: {
+                            * energy: 100
+                            * form: "light"
+                            * efficiency: 1
+                        }
+                      # name: "table"
+                      # has_sub: false
+                  }
+                +
+                  -
+                  {
+                      #
+                        -
+                        terminals: [
+                            *
+                              -
+                              {
+                                  o
+                                    -
+                                    wireConfig: {
+                                        + drawingMethod: "bezierArrows"
+                                    }
+                                  o name: "Terminal1"
+                                  o
+                                    -
+                                    direction: [
+                                        + 0
+                                        + -1
+                                    ]
+                                  o
+                                    -
+                                    offsetPosition: {
+                                        + left: 20
+                                        + top: -25
+                                    }
+                                  o
+                                    -
+                                    ddConfig: {
+                                        + type: "input"
+                                        +
+                                          -
+                                          allowedTypes: [
+                                              # "input"
+                                              # "output"
+                                          ]
+                                    }
+                              }
+                            *
+                              -
+                              {
+                                  o
+                                    -
+                                    wireConfig: {
+                                        + drawingMethod: "bezierArrows"
+                                    }
+                                  o name: "Terminal2"
+                                  o
+                                    -
+                                    direction: [
+                                        + 0
+                                        + 1
+                                    ]
+                                  o
+                                    -
+                                    offsetPosition: {
+                                        + left: 20
+                                        + bottom: -25
+                                    }
+                                  o
+                                    -
+                                    ddConfig: {
+                                        + type: "output"
+                                        +
+                                          -
+                                          allowedTypes: [
+                                              # "input"
+                                              # "output"
+                                          ]
+                                    }
+                              }
+                        ]
+                      # draggable: true
+                      #
+                        -
+                        position: [
+                            * "72px"
+                            * "83px"
+                        ]
+                      # className: "WireIt-Container WireIt-ImageContainer"
+                      # ddHandle: false
+                      # ddHandleClassName: "WireIt-Container-ddhandle"
+                      # resizable: false
+                      # resizeHandleClassName: "WireIt-Container-resizehandle"
+                      # close: true
+                      # closeButtonClassName: "WireIt-Container-closebutton"
+                      # icon: "./images/thermodynamics/hotbowl.png"
+                      # preventSelfWiring: true
+                      # image: "./images/thermodynamics/hotbowl.png"
+                      # xtype: "MySystemContainer"
+                      #
+                        -
+                        fields: {
+                            * name: "hot bowl"
+                            * energy: 100
+                            * form: "light"
+                            * efficiency: 1
+                        }
+                      # name: "hot bowl"
+                      # has_sub: false
+                  }
+            ]
+          o
+            -
+            wires: [
+                +
+                  -
+                  {
+                      #
+                        -
+                        src: {
+                            * moduleId: 1
+                            * terminal: "Terminal2"
+                        }
+                      #
+                        -
+                        tgt: {
+                            * moduleId: 0
+                            * terminal: "Terminal2"
+                        }
+                      #
+                        -
+                        options: {
+                            * className: "WireIt-Wire"
+                            * coeffMulDirection: 100
+                            * drawingMethod: "bezierArrows"
+                            * cap: "round"
+                            * bordercap: "round"
+                            * width: 5
+                            * borderwidth: 1
+                            * color: "#BD1550"
+                            * bordercolor: "#000000"
+                            *
+                              -
+                              fields: {
+                                  o name: "flow"
+                                  o width: 5
+                                  o color: "color2"
+                              }
+                            * selected: false
+                        }
+                  }
+            ]
+      }
+
+]
