@@ -8910,9 +8910,19 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
         this.writeKey = write;
       }
       else {
-        this.writeKey= new UUID().toString();
+        this.writeKey= this.randomString();
         this.readKey = this.writeKey;
       }
+    },
+    randomString: function() {
+    	var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+    	var string_length = 8;
+    	var randomstring = '';
+    	for (var i=0; i<string_length; i++) {
+    		var rnum = Math.floor(Math.random() * chars.length);
+    		randomstring += chars.substring(rnum,rnum+1);
+    	}
+    	return randomstring;
     },
     save: function(_data) {
         this.data = _data;
@@ -8928,8 +8938,11 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
     load: function(context,callback) {
       var get_from = this.getPath  + this.writeKey;
       var self = this;
-      debug("just about to load with " + this.readKey);
-  	  if (this.readKey) {
+      var key = prompt("load what system-key?: ", this.readKey);
+      this.writeKey = key;
+      this.readKey = key;
+      debug("just about to load with " + key);
+  	  if (key) {
   	    self = this;
         new Ajax.Request(get_from, {
           asynchronous: true,
@@ -9955,12 +9968,7 @@ MySystemData.defaultTerminals = function() {
                 container: toolbar
             });
             helpButton.on("click", this.onHelp, this, true);
-        },
-        /**
-        * Enable the save and load buttons
-        * @method enableLoadAndSave
-        */
-        enableLoadAndSave: function() {
+
           var toolbar = Dom.get('toolbar');
           var loadButton = new widget.Button({
               label: "Load",
@@ -10018,17 +10026,6 @@ MySystemData.defaultTerminals = function() {
          else {
            alert("No Data Service defined");
          }
-        },
-
-        setDataService: function(ds) {
-          this.dataService=ds;
-          if (this.dataService.enableLoadAndSave) {
-            this.enableLoadAndSave;
-            debug("yes -- it was enabled");
-          }
-          else {
-            debug ("no it was not eneabled");
-          }
         },
 
         /**
