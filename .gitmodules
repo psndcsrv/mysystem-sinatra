@@ -1,6 +1,3 @@
-[submodule "public"]
-	path = public
-	url = git://github.com/knowuh/mysystem.git
 [submodule "lib/bumble"]
 	path = lib/bumble
 	url = git://github.com/olabini/bumble.git
