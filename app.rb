@@ -5,7 +5,7 @@ require 'sinatra'
 mime :json, "application/json"
 
 get '/' do
-  redirect '/mysystem-demo.html'
+  redirect '/mysystem.html'
 end
 
 get '/models' do
