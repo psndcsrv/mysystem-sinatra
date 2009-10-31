@@ -13,7 +13,7 @@ end
 
 class MySystemModel 
   include DataMapper::Resource
-  property :msuuid,         String, :key=>true
+  property :msuuid,       String, :key=>true
   property :content,      Text
 end
 
