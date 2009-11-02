@@ -8911,7 +8911,6 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
       }
       else {
         this.writeKey= this.randomString();
-        this.readKey = this.writeKey;
       }
     },
     randomString: function() {
@@ -8936,13 +8935,23 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
     },
 
     load: function(context,callback) {
-      var get_from = this.getPath  + this.writeKey;
+      if (this.readKey) {
+        var key = prompt("Please enter the model to load: ", this.readKey);
+        this.writeKey = key;
+        this.readKey = key;
+      }
+      else {
+        if (this.writeKey) {
+          this.readKey = this.writeKey;
+        }
+        else {
+          this.readKey = this.writeKey = this.randomString();
+        }
+      }
+      var get_from = this.getPath  + this.readKey;
       var self = this;
-      var key = prompt("load what system-key?: ", this.readKey);
-      this.writeKey = key;
-      this.readKey = key;
-      debug("just about to load with " + key);
-  	  if (key) {
+      debug("just about to load with " + this.readKey);
+  	  if (this.readKey) {
   	    self = this;
         new Ajax.Request(get_from, {
           asynchronous: true,
