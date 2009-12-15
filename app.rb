@@ -8,6 +8,10 @@ get '/' do
   redirect '/mysystem.html'
 end
 
+get '/mysystem-demo.html' do
+  redirect '/mysystem.html'
+end
+
 get '/models' do
   content_type :json
   models = MySystemModel.all
