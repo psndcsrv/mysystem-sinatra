@@ -16,38 +16,38 @@
       'xtype'				: "MySystemContainer",
   		'etype'				: 'source',
       'fields'			: {
-     									  		'name'				: 'Clay',
+     									  'name'				: 'Clay',
       									'energy'			: 100,
       									'efficiency'	: 1
       								}
   	},  	{
-  		'name'				: 'Hand',
       'icon'				: "./images/At-Concord-Fall/hand_tn.png",
       'image'				: "./images/At-Concord-Fall/hand_tn.png",
       'xtype'				: "MySystemContainer",
   		'etype'				: 'source',
       'fields'			: {
+     									  'name'				: 'Hand',  
       									'energy'			: 100,
       									'efficiency'	: 1
       								}
   	},  	{
-  		'name'				: 'Lightbulb',
       'icon'				: "./images/At-Concord-Fall/lightbulb_tn.png",
       'image'				: "./images/At-Concord-Fall/lightbulb_tn.png",
       'xtype'				: "MySystemContainer",
   		'etype'				: 'source',
       'fields'			: {
+  		                  'name'				: 'Lightbulb',
       									'energy'			: 100,
       									'efficiency'	: 1
       								}
   	},
   	  	{
-  		'name'				: 'World',
       'icon'				: "./images/world-transp.png",
       'image'				: "./images/world-transp.png",
       'xtype'				: "MySystemContainer",
   		'etype'				: 'source',
       'fields'			: {
+      									'name'		  	: 'World',
       									'energy'			: 100,
       									'efficiency'	: 1
       								}
