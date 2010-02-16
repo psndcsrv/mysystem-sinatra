@@ -1,55 +1,57 @@
 [
-  	{
+    {
 
-      'icon'				: "./images/At-Concord-Fall/Genecon_tn.png",
-      'image'				: "./images/At-Concord-Fall/Genecon_tn.png",
-      'xtype'				: "MySystemContainer",
-  		'etype'				: 'source',
-      'fields'			: {
-        								'name'				: 'Generator',
-      									'efficiency'	: 1
-      								}
-  	},  	{
-
-      'icon'				: "./images/At-Concord-Fall/clay_red_tn.png",
-      'image'				: "./images/At-Concord-Fall/clay_red_tn.png",
-      'xtype'				: "MySystemContainer",
-  		'etype'				: 'source',
-      'fields'			: {
-     									  'name'				: 'Clay',
-      									'energy'			: 100,
-      									'efficiency'	: 1
-      								}
-  	},  	{
-      'icon'				: "./images/At-Concord-Fall/hand_tn.png",
-      'image'				: "./images/At-Concord-Fall/hand_tn.png",
-      'xtype'				: "MySystemContainer",
-  		'etype'				: 'source',
-      'fields'			: {
-     									  'name'				: 'Hand',  
-      									'energy'			: 100,
-      									'efficiency'	: 1
-      								}
-  	},  	{
-      'icon'				: "./images/At-Concord-Fall/lightbulb_tn.png",
-      'image'				: "./images/At-Concord-Fall/lightbulb_tn.png",
-      'xtype'				: "MySystemContainer",
-  		'etype'				: 'source',
-      'fields'			: {
-  		                  'name'				: 'Lightbulb',
-      									'energy'			: 100,
-      									'efficiency'	: 1
-      								}
-  	},
-  	  	{
-      'icon'				: "./images/world-transp.png",
-      'image'				: "./images/world-transp.png",
-      'xtype'				: "MySystemContainer",
-  		'etype'				: 'source',
-      'fields'			: {
-      									'name'		  	: 'World',
-      									'energy'			: 100,
-      									'efficiency'	: 1
-      								}
-  	},
-  ];
+      'icon'        : "./images/At-Concord-Fall/Genecon_tn.png",
+      'image'       : "./images/At-Concord-Fall/Genecon_tn.png",
+      'xtype'       : "MySystemContainer",
+      'etype'       : 'source',
+      'fields'      : {
+                        'name'        : 'Generator',
+                        'efficiency'  : 1
+                      }
+    },    
+    {
+      'icon'        : "./images/At-Concord-Fall/clay_red_tn.png",
+      'image'       : "./images/At-Concord-Fall/clay_red_tn.png",
+      'xtype'       : "MySystemContainer",
+      'etype'       : 'source',
+      'fields'      : {
+                        'name'        : 'Clay',
+                        'energy'      : 100,
+                        'efficiency'  : 1
+                      }
+    },    
+    {
+      'icon'        : "./images/At-Concord-Fall/hand_tn.png",
+      'image'       : "./images/At-Concord-Fall/hand_tn.png",
+      'xtype'       : "MySystemContainer",
+      'etype'       : 'source',
+      'fields'      : {
+                        'name'        : 'Hand',  
+                        'energy'      : 100,
+                        'efficiency'  : 1
+                      }
+    },    
+    {
+      'icon'        : "./images/At-Concord-Fall/lightbulb_tn.png",
+      'image'       : "./images/At-Concord-Fall/lightbulb_tn.png",
+      'xtype'       : "MySystemContainer",
+      'etype'       : 'source',
+      'fields'      : {
+                        'name'        : 'Lightbulb',
+                        'energy'      : 100,
+                        'efficiency'  : 1
+                      }
+    },
+    {
+      'icon'        : "./images/world-transp.png",
+      'image'       : "./images/world-transp.png",
+      'xtype'       : "MySystemContainer",
+      'etype'       : 'source',
+      'fields'      : {
+                        'name'        : 'World',
+                        'energy'      : 100,
+                        'efficiency'  : 1
+                      }
+    },
+];
