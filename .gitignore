@@ -1,3 +1,5 @@
 tmp/*
 *war
 .DS_Store
+.gems
+WEB-INF/lib
