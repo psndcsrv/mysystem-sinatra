@@ -2,7 +2,7 @@
   <context-param>
     <param-name>rackup</param-name>
     <param-value>
-Dir.chdir(&apos;..&apos;) if Dir.pwd =~ /WEB-INF$/;eval IO.read(&apos;config.ru&apos;), nil, &apos;config.ru&apos;, 1
+Dir.chdir(&apos;..&apos;) if Dir.pwd =~ /WEB-INF$/; begin; require &apos;bundler_gems/environment&apos;; rescue LoadError; end;eval IO.read(&apos;config.ru&apos;), nil, &apos;config.ru&apos;, 1
     </param-value>
   </context-param>
   <filter>
@@ -14,6 +14,6 @@ Dir.chdir(&apos;..&apos;) if Dir.pwd =~ /WEB-INF$/;eval IO.read(&apos;config.ru&
     <url-pattern>/*</url-pattern>
   </filter-mapping>
   <listener>
-    <listener-class>org.jruby.rack.RackServletContextListener</listener-class>
+    <listener-class>com.google.appengine.jruby.LazyContextListener</listener-class>
   </listener>
 </web-app>

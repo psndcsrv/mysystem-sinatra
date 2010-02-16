@@ -6,6 +6,8 @@
   <resource-files/>
   <system-properties>
     <property name='os.arch' value=''/>
+    <property name='jruby.jit.threshold' value='99'/>
+    <property name='jruby.native.enabled' value='false'/>
     <property name='jruby.management.enabled' value='false'/>
     <property name='jruby.rack.input.rewindable' value='false'/>
   </system-properties>
