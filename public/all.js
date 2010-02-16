@@ -5860,6 +5860,10 @@ WireIt.Wire = function( terminal1, terminal2, parentEl, options) {
 
    this.terminal1.addWire(this);
    this.terminal2.addWire(this);
+   if (this.is_connected()) {
+     this.redraw();
+     this.openPropEditor();
+   }
 };
 
 
@@ -5899,6 +5903,14 @@ YAHOO.lang.extend(WireIt.Wire, WireIt.CanvasElement, {
        'width': this.options.width,
        'color': 'color1'
       };
+   },
+
+   is_connected: function() {
+     return (
+          this.terminal1
+       && this.terminal1.container
+       && this.terminal2
+       && this.terminal2.container)
    },
 
    /**
@@ -6506,16 +6518,16 @@ YAHOO.lang.extend(WireIt.Wire, WireIt.CanvasElement, {
     */
    onWireClick: function(x,y) {
      debug('clicked');
-     WireIt.Wire.openPropEditorFor.fire(this);
-     this.redraw;
-
-
    },
 
    onWireDblClick: function(x,y) {
  	  debug('dbl-clicked');
-    WireIt.Wire.openPropEditorFor.fire(this);
-		this.redraw;
+    this.openPropEditor();
+   },
+
+   openPropEditor: function() {
+     WireIt.Wire.openPropEditorFor.fire(this);
+     this.redraw;
    }
 });
 
@@ -6875,7 +6887,7 @@ lang.extend(WireIt.TerminalProxy, util.DDProxy, {
         my.reset();
         my.cycle();
         my.list();
-
+        w.redraw();
 
         /*
         NOAH: Removed this for Berklee Demo.
@@ -7734,7 +7746,6 @@ WireIt.Container.prototype = {
       if( WireIt.indexOf(wire, this.wires) == -1 ) {
          this.wires.push(wire);
          this.eventAddWire.fire(wire);
-         WireIt.Wire.openPropEditorFor.fire(wire);
       }
    },
 
@@ -7853,6 +7864,14 @@ YAHOO.lang.extend(WireIt.ImageContainer, WireIt.Container, {
    render: function() {
       WireIt.ImageContainer.superclass.render.call(this);
       YAHOO.util.Dom.setStyle(this.bodyEl, "background-image", "url("+this.options.image+")");
+      var newImg = new Image();
+      newImg.src = this.options.image;
+      var height = newImg.height;
+      var width = newImg.width;
+      this.el.style.height=height+"px";
+      this.el.style.width=width+"px";
+      this.bodyEl.style.width=width+"px"
+      this.bodyEl.style.height=height+"px"
    },
 
    /**
@@ -9059,8 +9078,8 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
   GGearsDS.prototype = {
     setKeys: function(read,write) {
       if (read) {
-        this.load(this,function(){});// just load data
         this.readKey = read;
+        this.load(this,function(){});// just load data
       }
       if (write) {
         this.writeKey = write;
@@ -9071,12 +9090,14 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
     },
 
     open_db: function() {
-      this.db_connection = google.gears.factory.create("beta.database");
-      this.db_connection.open(this.db);
-      this.db_connection.execute (
-               'create table if not exists ' + this.table +
-               ' (key string, content text, Timestamp int)'
-      );
+      if (google) {
+        this.db_connection = google.gears.factory.create("beta.database");
+        this.db_connection.open(this.db);
+        this.db_connection.execute (
+                 'create table if not exists ' + this.table +
+                 ' (key string, content text, Timestamp int)'
+        );
+      }
     },
 
     save: function(_data) {
@@ -9213,71 +9234,152 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
  * @param {Object} options
  */
 MySystemPropEditor = function(options) {
-   this.domID = options.domID || "prop_editor";
+   this.domID = options.domID || "prop_form";
+   this.dom_entity = $(this.domID);
    this.formName = options.formName || "prop_form_form";
    this.selected_color = "#000000"
 };
 
 
 MySystemPropEditor.prototype = {
+
   updateFields: function() {
-    var subsTmpl = new Template ('<div class="inputBox"><label for="has_sub">sub systems?</label><input type="checkbox" #{checked} name="has_sub" value="1" id="has_sub"></div>')
-    var fieldTmpl = new Template('<div class="inputBox"><label for="#{name}">#{name}</label><input type="text" name="#{name}" value="#{value}" id="#{name}"></div>');
-    var fields = [];
-    $H(this.node.options.fields).keys().each(function (field_name) {
+    this.clearFields();
+    var self =  this;
+    $H(this.node.options.fields).each(function (pair) {
+      var field_name = pair.key;
+      var _value = this.node.options.fields[field_name];
       if(field_name !='color') {
-        fields.push (fieldTmpl.evaluate({name: field_name, value: this.node.options.fields[field_name]}));
+        this.addField(field_name,_value);
       }
     }.bind(this));
-    fields.push (subsTmpl.evaluate({checked: (this.node.has_sub ? 'checked="true"' : '')}));
-    var fieldText = fields.join("<br/>")
+
     if (this.node.title) {
-      $('prop_name').update("properties for " + this.node.title);
+      $('prop_name').update("info about " + this.node.title);
     }
     else {
-      $('prop_name').update("properties for wire");
+      $('prop_name').update("info for flow");
     }
-    $('prop_fields').update(fieldText);
-    if ($('name')) {
-      $('name').activate();
-    }
+    $('prop_form_closer').observe('mouseover',function(e) {
+      self.opacity(0.99,'prop_form_closer');
+    });
+    $('prop_form_closer').observe('mouseout',function(e) {
+      self.opacity(0.5,'prop_form_closer');
+    });
+    $('prop_form_closer').observe('click',function(e) {
+      self.disable();
+    });
+    this.dom_entity.observe('keydown', function(e){
+
+      var code;
+      var escapeKey = 27;
+      var returnKey = 13;
+      if (e.keyCode) code = e.keyCode;
+      else if (e.which) code = e.which;
+
+      if (code == escapeKey || code == returnKey) {
+        self.disable();
+      }
+    });
   },
+
+  opacity: function(opacity, dom_id) {
+    var elem = $(dom_id);
+    elem.setStyle({
+      'opacity': opacity,
+      '-moz-opacity': opacity,
+      'filter': 'alpha(opacity=' + (opacity * 100) +')'
+    });
+
+  },
+  clearFields: function() {
+    $('prop_fields').update('');
+  },
+
+  addField: function(field_name,value) {
+    var type = 'text';
+    var fields = $('prop_fields');
+    var label = new Element('label', {'for': field_name});
+    label.update(field_name);
+
+    var input = new Element('input', { 'type': type, 'name': field_name, 'id': field_name, 'value': value});
+
+    var label_td = new Element('td', {'align': 'right', 'class': 'input_label' });
+    label_td.setStyle({'align': 'right'});
+    label_td.setStyle({'text-align': 'right'});
+    label_td.insert({'bottom': label});
+
+    var input_td = new Element('td', { 'class': 'input_field' });
+    input_td.insert({'bottom': input});
+
+    var table_row = new Element('tr', { 'class': 'input_row'});
+    table_row.insert({'bottom': label_td});
+    table_row.insert({'bottom': input_td});
+
+    $('prop_fields').insert({'bottom': table_row});
+  },
+
   save_values: function() {
     var theForm = $(this.formName);
     var fieldNames = $H(this.node.options.fields).keys();
     theForm.getInputs('text').each(function (fe) {
       this.node.options.fields[fe.name] = fe.value;
     }.bind(this));
-    debug("set color "+ this.selected_color);
+
     if (this.node.options.fields.color) {
       this.node.options.fields.color = this.selected_color;
     }
-    this.node.has_sub = $F('has_sub')
     this.node.updateFields();
   },
+
+
   deselect: function() {
     $$('.selected').each( function(elem) {
        elem.removeClassName('selected');
      });
   },
 
-  show: function(node) {
+  disable: function() {
+    this.dom_entity.hide();
+    this.deselect();
+    this.setNode(null);
+    this.deselect();
+    document.stopObserving('mousedown');
     if(this.form_observer !=null) {
       this.form_observer.stop();
       this.form_observer = null;
       $('palette').stopObserving('click');
     }
+  },
 
-    if (this.node) {
-      if ($(this.node.bodyEl)) {
-        $(this.node.bodyEl).removeClassName('selected');
+  enableClickAway: function() {
+    var clickHandler = function(e) {
+      var close = true;
+      var clicked = e.element();
+      if (this.node) {
+        if (clicked == this.node_element || clicked.descendantOf(this.node_element)) {
+          close = false;
+        }
       }
-      if (this.node.options.selected) {
-        this.node.options.selected=false;
-        this.node.redraw();
+      if ( clicked == this.dom_entity
+        || clicked.descendantOf(this.dom_entity)) {
+          close = false;
       }
+      if (close) {
+       this.disable();
+      }
+    };
+    document.observe('click', clickHandler.bind(this));
+  },
+
+
+  show: function(nnode) {
+    if(this.form_observer !=null) {
+      this.form_observer.stop();
+      this.form_observer = null;
+      $('palette').stopObserving('click');
     }
-    this.node = node;
+    this.setNode(nnode);
     this.updateFields();
 
     this.selected_color = this.node.options.fields.color || "color2";
@@ -9287,24 +9389,69 @@ MySystemPropEditor.prototype = {
       $(selected_pallete_item).addClassName('selected');
     }
 
+    this.positionEditor();
+    this.showPallet();
+    this.positionIcon();
+    this.enableClickAway();
     this.form_observer = new Form.Observer($(this.formName),0.3,this.save_values.bind(this));
-    $('prop_form').show();
-    if (this.node.options.fields.color) {
-      $('palette').show();
-      $('palette').observe('click', function (event) {
-        this.deselect();
-        var element = event.element();
-        element.addClassName('selected');
-        this.selected_color = element.identify();
-        this.save_values();
-      }.bind(this));
-      this.node.options.selected=true;
+    $(this.formName).focusFirstElement();
+  },
+
+
+  setNode: function(n) {
+    if (n && n.options){
+      if (this.node) {
+        if ($(this.node_element)) {
+          $(this.node_element).removeClassName('selected');
+        }
+        if (this.node.options.selected) {
+          this.node.options.selected=false;
+          this.node.redraw();
+        }
+      }
+      this.node = n;
+      this.node_element = n.element;
     }
     else {
-      $('palette').hide();
-      $(this.node.bodyEl).addClassName('selected');
+      this.node = null;
+      this.node_element = null;
     }
-    if (this.node.options.icon) {
+  },
+
+  showPallet: function() {
+    if (this.node.options.fields.color) {
+        $('palette').show();
+        $('palette').observe('click', function (event) {
+          this.deselect();
+          var element = event.element();
+          element.addClassName('selected');
+          this.selected_color = element.identify();
+          this.save_values();
+        }.bind(this));
+        this.node.options.selected=true;
+      }
+      else {
+        $('palette').hide();
+        $(this.node.bodyEl).addClassName('selected');
+      }
+  },
+
+  positionEditor: function() {
+    this.dom_entity.show();
+    this.dom_entity.absolutize();
+    this.dom_entity.clonePosition(this.node_element,{
+      setWidth: false,
+      setHeight: false,
+      offsetLeft: this.node_element.getWidth(),
+    });
+  },
+
+  nodeIsIcon: function(n) {
+    return (n.options && n.options.icon);
+  },
+
+  positionIcon: function() {
+    if (this.nodeIsIcon(this.node)) {
       if($('icon_spot')) {
         $('icon_spot').update('<img src="' + this.node.options.icon + '" alt="icon" class="icon"/></br>');
       }
@@ -9381,8 +9528,8 @@ YAHOO.extend(MySystemWireLabel, WireIt.Container, {
 MySystemContainer = function(options, layer) {
    MySystemContainer.superclass.constructor.call(this, options, layer);
    this.title = options.name || "MySystem Container";
+   this.options.fields = options.fields || {'name': this.title, 'energy': 10};
    this.icon = options.icon;
-   this.options.fields = options.fields || {'name': options.name, 'energy': 10};
    this.has_sub = options.has_sub || false;
    this.subSystem =  null;
    if (options.subsystem_options != null) {
@@ -9395,7 +9542,6 @@ MySystemContainer = function(options, layer) {
 
 
    if (this.options.position) {
-     debug($(this.options.position).inspect());
      $(this.el).setStyle({
        position: 'absolute',
        left: this.options.position[0],
@@ -9404,20 +9550,19 @@ MySystemContainer = function(options, layer) {
 
     }
    YAHOO.util.Event.addListener(this.el, "dblclick", this.onDblClick, this, true);
-   YAHOO.util.Event.addListener(this.el, "mouseup", this.onMouseUp, this, true);
    this.setTitle(this.options.fields.name);
+   this.element = this.el;
 };
 
 
 YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
   onMouseUp: function(source) {
+  },
+  onClick: function(source) {
     MySystemContainer.openPropEditorFor.fire(this);
   },
-
   onDblClick: function(source) {
-    if (this.has_sub) {
-      MySystemContainer.openContextFor.fire(this);
-    }
+      MySystemContainer.openPropEditorFor.fire(this);
   },
 
   setTitle: function(newTitle) {
@@ -9426,6 +9571,7 @@ YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
       var title_el = $(this_el).down('.title')
       this.title = newTitle;
       this.options.name = this.title;
+      this.options.fields.name = this.title;
       if(!title_el) {
         title_el = this.createTitle()
         this_el.insert(title_el);
@@ -9451,7 +9597,7 @@ YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
   },
   updateFields: function() {
     debug(($H(this.options.fields).inspect()));
-    this.setTitle(this.options.fields.name);
+    this.setTitle(this.options.fields.name || this.options.name );
   },
 
   getConfig: function() {
@@ -9543,7 +9689,7 @@ MySystemData.defaultTerminals = function() {
        "direction": [0, 1],
        "offsetPosition": {
            "left": 20,
-           "bottom": -25
+           "bottom": -50
        },
        "ddConfig": {
            "type": "output",
@@ -9623,6 +9769,11 @@ MySystemData.defaultTerminals = function() {
               for( var i in par._module ){
                 this[ i ] = par._module[ i ];
               }
+              this.fields = {};
+              for( var i in par._module.fields ){
+                this.fields[i] = par._module.fields[ i ];
+              }
+              debug(this);
               var energyForm = {};
               energyForm[ par._module.fields.form ] = par._module.fields.efficiency;
 
@@ -9637,7 +9788,7 @@ MySystemData.defaultTerminals = function() {
               });
             }
 
-            this._MySysEditor.addModule( new Copy( this ), pos );
+            this._MySysEditor.addModule(new Copy(this), pos );
         }
     });
 
@@ -9659,27 +9810,6 @@ MySystemData.defaultTerminals = function() {
         */
         this.el = Dom.get(data.parentEl);
 
-      /**
-       * @property helpPanel
-       * @type {YAHOO.widget.Panel}
-       */
-        this.helpPanel = new widget.Panel('helpPanel', {
-            fixedcenter: true,
-            draggable: true,
-            visible: false,
-            modal: true
-        });
-        this.helpPanel.render();
-
-        this.devPanel = new widget.Panel('developer', {
-            fixedcenter: true,
-            draggable: true,
-            visible: false,
-            modal: false
-        });
-        this.devPanel.render();
-
-
         /**
        * @property layout
        * @type {YAHOO.widget.Layout}
@@ -9687,6 +9817,7 @@ MySystemData.defaultTerminals = function() {
         this.layout = new widget.Layout(null, this.options.layoutOptions);
         this.layout.render();
 
+        this.resetLayers();
         this.buildModulesList();
 
         this.renderButtons();
@@ -9731,21 +9862,12 @@ MySystemData.defaultTerminals = function() {
                     animate: true
                 },
                 {
+                  position: 'right'
+                },
+                {
                     position: 'center',
                     body: 'center',
                     gutter: '5px'
-                },
-                {
-                    position: 'right',
-                    width: 224,
-                    resize: true,
-                    body: 'right',
-                    gutter: '5px',
-                    collapse: true,
-                    collapseSize: 25,
-                    header: 'Properties:',
-                    scroll: true,
-                    animate: true
                 }
                 ]
             };
@@ -9753,8 +9875,7 @@ MySystemData.defaultTerminals = function() {
             this.options.layerOptions = {};
             var layerOptions = options.layerOptions || {};
             this.options.layerOptions.parentEl = layerOptions.parentEl ? layerOptions.parentEl: Dom.get('center');
-            this.options.layerOptions.layerMap = YAHOO.lang.isUndefined(layerOptions.layerMap) ? true: layerOptions.layerMap;
-            this.options.layerOptions.layerMapOptions = layerOptions.layerMapOptions || { parentEl: 'layerMap' };
+            this.options.layerOptions.layerMap = false;
 
             MySystemContainer.openPropEditorFor.subscribe(this.onOpenPropEditorFor,this,true);
             MySystemContainer.openContextFor.subscribe(this.onOpenContextFor,this,true);
@@ -9792,64 +9913,30 @@ MySystemData.defaultTerminals = function() {
               if (module.subSystem == null) {
                 module.subSystem = this.addLayer();
               }
-              this.changeLayer(module.subSystem);
             }
         },
-
-        removeLayerMap: function(newLayer) {
-          try {
-            Event.removeListener(newLayer.layerMap.element, 'mouseup');
-            newLayer.layerMap.options.parentEl.removeChild(newLayer.layerMap.element);
-            if (this.layerStack.indexOf(newLayer)) {
-              this.layerStack[this.layerStack.indexOf(newLayer)]= null;
-            }
-          }
-          catch (e) {
-            debug("error removing layer: " + e);
-          }
-        },
-
+        addLayer: function() {
+            this.numLayers = this.numLayers + 1;
+            var newOpts = Object.clone(this.options.layerOptions);
+            newOpts.layerNumber = this.numLayers;
+            var newLayer = new WireIt.Layer(newOpts);
+            return newLayer;
+          },
         removeLayer: function(newLayer) {
           this.numLayers = this.numLayers - 1;
-          this.removeLayerMap(newLayer);
           newLayer.removeAllContainers();
           newLayer = null;
           return null;
         },
-
-        addLayerMap: function(newLayer) {
-          this.layerStack.push(newLayer);
-          newLayer.layerMap.options.parentEl.appendChild(newLayer.layerMap.element);
-          Event.addListener(newLayer.layerMap.element, 'mouseup', function (e,args) {
-             Event.stopEvent(e);
-             this.changeLayer(newLayer);
-          }, this, true);
-        },
-
-      addLayer: function() {
-          this.numLayers = this.numLayers + 1;
-          var newOpts = Object.clone(this.options.layerOptions);
-          newOpts.layerNumber = this.numLayers;
-          var newLayer = new WireIt.Layer(newOpts);
-          this.addLayerMap(newLayer);
-          return newLayer;
-        },
-
         changeLayer: function(newLayer) {
-          var index = this.layerStack.indexOf(newLayer);
-          if(index < 0) {
-            this.addLayerMap(newLayer);
-          }
-          else {
-            for(var i = index+1; i < this.layerStack.size();i++) {
-              this.removeLayerMap(this.layerStack[i]);
-            }
-            this.layerStack = this.layerStack.compact();
-          }
-          this.setLayer(newLayer)
-          this.updateLayerInfo();
+             var index = this.layerStack.indexOf(newLayer);
+             if(index < 0) {
+             }
+             else {
+               this.layerStack = this.layerStack.compact();
+             }
+             this.setLayer(newLayer)
         },
-
         setLayer:function(newLayer) {
           this.cleanWiring(newLayer);
           if (this.layer == null) { this.layer = this.rootLayer;}
@@ -9861,7 +9948,7 @@ MySystemData.defaultTerminals = function() {
           this.layer.el.show();
           this.setDDLayer(this.layer);
           this.hidePropEditor();
-        },
+       },
         cleanWiring: function(newLayer) {
           var i = 0;
           var size = newLayer.wires.length;
@@ -9882,8 +9969,6 @@ MySystemData.defaultTerminals = function() {
           }
         },
 
-        updateLayerInfo: function() {
-        },
 
         hidePropEditor: function() {
           $('prop_form').hide();
@@ -9915,6 +10000,12 @@ MySystemData.defaultTerminals = function() {
                 div.appendChild(WireIt.cn('span', null, null, module.name));
             }
 
+            if (module.fields && module.fields.name) {
+              div.appendChild(WireIt.cn('span', null, null, module.fields.name));
+            }
+            else if (module.name) {
+              div.appendChild(WireIt.cn('span', null, null, module.name));
+            }
             var ddProxy = new MySystemDragAndDropProxy(div, this);
             ddProxy._module = module;
             left.appendChild(div);
@@ -9941,18 +10032,14 @@ MySystemData.defaultTerminals = function() {
         * usually invoked by drag-and-drop callback
         */
         addModule: function(module, pos){
-            try {
-                module.position = pos;
-                module.title = module.name;
-                module.layer = this.layer;
-                var container = this.layer.addContainer(module);
-                container.setTitle(module.title);
-                container.options.position = pos;
-                container.module = module;
-                Dom.addClass(container.el, "WiringEditor-module-" + module.name);
-            }
-            catch(ex) {
-            }
+              module.position = pos;
+              module.title = module.name;
+              module.layer = this.layer;
+              var container = this.layer.addContainer(module);
+              container.setTitle(module.title);
+              container.options.position = pos;
+              container.module = module;
+              Dom.addClass(container.el, "WiringEditor-module-" + module.name);
         },
 
 
@@ -9977,7 +10064,12 @@ MySystemData.defaultTerminals = function() {
                 container: toolbar
             });
             helpButton.on("click", this.onHelp, this, true);
-
+        },
+        /**
+        * Enable the save and load buttons
+        * @method enableLoadAndSave
+        */
+        enableLoadAndSave: function() {
           var toolbar = Dom.get('toolbar');
           var loadButton = new widget.Button({
               label: "Load",
@@ -10069,28 +10161,6 @@ MySystemData.defaultTerminals = function() {
          /**
          * @method onPrint
          */
-         onShowJson: function(layer_object) {
-           var width = this.rootLayer.el.getWidth();
-           var height = this.rootLayer.el.getHeight();
-
-
-           $('JSON_DATA').update(
-             "<p><br><ul><li>width: " + width +
-             "<li> height: " + height +
-            "</ul></p><code>" + [this.rootLayer.getWiring()].toJSON() + "</code>");
-           this.devPanel.render();
-           this.devPanel.show();
-
-         },
-
-
-        /**
-        * Create a help panel
-        * @method onHelp
-        */
-        onHelp: function() {
-            this.helpPanel.show();
-        },
 
         /**
         * @method onNew
@@ -10173,6 +10243,7 @@ MySystemData.defaultTerminals = function() {
 
   this.MySystem = function( jsonURL ){
     this.init( jsonURL );
+    this.interceptKeys();
   };
 
   MySystem.prototype = {
@@ -10187,6 +10258,19 @@ MySystemData.defaultTerminals = function() {
       }
     },
 
+    interceptKeys: function() {
+      document.observe('keydown', function(e){
+        var code;
+        var element = $(e.element());
+        if (e.keyCode) code = e.keyCode;
+        else if (e.which) code = e.which;
+        if (code == 8 || code == 127) {
+          if ( !element.match('input')) {
+              e.stop();
+          }
+        }
+      });
+    },
     setEditor: function(_editor) {
       debug("new editor being set");
       if (_editor) {
@@ -10213,6 +10297,7 @@ MySystemData.defaultTerminals = function() {
           self.data = new MySystemData();
           self.data.setData(_data,[],true);
           self.setEditor();
+          self.loaded=true;
         },
         onFailure: function(req,err) {
           debug("failed!");
