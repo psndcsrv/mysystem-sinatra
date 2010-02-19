@@ -5860,6 +5860,7 @@ WireIt.Wire = function( terminal1, terminal2, parentEl, options) {
 
    this.terminal1.addWire(this);
    this.terminal2.addWire(this);
+   this.xtype = "WireIt-Wire";
    if (this.is_connected()) {
      this.redraw();
      this.openPropEditor();
@@ -6535,11 +6536,9 @@ YAHOO.lang.extend(WireIt.Wire, WireIt.CanvasElement, {
     * @param {Integer} y top position of the mouse (relative to the canvas)
     */
    onWireClick: function(x,y) {
-     debug('clicked');
    },
 
    onWireDblClick: function(x,y) {
- 	  debug('dbl-clicked');
     this.openPropEditor();
    },
 
@@ -9337,12 +9336,8 @@ MySystemPropEditor.prototype = {
     }.bind(this));
 
 
-    if (this.node.title) {
-      $('prop_name').update("edit details");
-    }
-    else {
-      $('prop_name').update("edit energy flow");
-    }
+    this.setEditorName(this.node);
+
     $('prop_form_closer').observe('mouseover',function(e) {
       self.opacity(0.99,'prop_form_closer');
     });
@@ -9354,6 +9349,20 @@ MySystemPropEditor.prototype = {
     });
   },
 
+  setEditorName: function(node) {
+    var xtype = node.xtype || node.options.xtype || 'default';
+    var domName = 'prop_name';
+    var nodeTypeMap = {
+      'default'           : 'Poperties',
+      'MySystemNote'      : 'Note Info',
+      'MySystemContainer' : 'Information',
+      'WireIt-Wire'       : 'Energy Flow Information'
+    };
+    var domThing = $(domName);
+    if (domThing) {
+      domThing.update(nodeTypeMap[xtype]);
+    }
+  },
 
   showField: function(field_name,value) {
 
@@ -9423,7 +9432,9 @@ MySystemPropEditor.prototype = {
     var theForm = $(this.formName);
     for (var name in this.fieldLabelMap) {
       try {
-        this.node.options.fields[name] = theForm[name].getValue();
+        if (this.node.options.fields[name]) {
+          this.node.options.fields[name] = theForm[name].getValue();
+        }
       }
       catch(e) {
         debug("unable to save property " + name + " for " + this.node);
@@ -9622,12 +9633,13 @@ MySystemContainer = function(options, layer) {
 
 YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
   onMouseUp: function(source) {
+
   },
   onClick: function(source) {
-    MySystemContainer.openPropEditorFor.fire(this);
+
   },
   onDblClick: function(source) {
-      MySystemContainer.openPropEditorFor.fire(this);
+    MySystemContainer.openPropEditorFor.fire(this);
   },
 
   setTitle: function(newTitle) {
@@ -9667,7 +9679,6 @@ YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
 
   },
   updateFields: function() {
-    debug(($H(this.options.fields).inspect()));
     this.setTitle(this.options.fields.name || this.options.name );
   },
 
@@ -9695,6 +9706,96 @@ MySystemContainer.openContextFor = new YAHOO.util.CustomEvent("openContextFor");
 
 
 
+/**
+ * MySystem Container. Has an image. and double_click beahvor.
+ * @class ImageContainer
+ * @extends WireIt.Container
+ * @constructor
+ * @param {Object} options
+ * @param {WireIt.Layer} layer
+ */
+MySystemNote = function(options, layer) {
+   MySystemNote.superclass.constructor.call(this, options, layer);
+   this.title = options.name || "Note";
+   this.options.fields = options.fields || {'name': this.title, 'content': "blank"};
+   this.icon = options.icon;
+   this.options.xtype = "MySystemNote";
+
+   if (this.options.position) {
+     $(this.el).setStyle({
+       position: 'absolute',
+       left: this.options.position[0],
+       top: this.options.position[1]
+     });
+
+    }
+   YAHOO.util.Event.addListener(this.el, "dblclick", this.onDblClick, this, true);
+   this.setContent(this.options.fields.content);
+   this.element = this.el;
+};
+
+
+YAHOO.lang.extend(MySystemNote, WireIt.Container, {
+  onMouseUp: function(source) {
+
+  },
+  onClick: function(source) {
+
+  },
+  onDblClick: function(source) {
+    MySystemContainer.openPropEditorFor.fire(this);
+  },
+  setTitle: function() {
+  },
+  setContent: function(newContent) {
+    if(newContent) {
+      this.getContentEl().update(this.options.fields.content);
+    }
+  },
+  createContent: function() {
+    return new Element('div', {'class': 'content' });
+  },
+  getContentEl: function() {
+    var content_el = $(this.el).down('.content')
+    if(!content_el) {
+      content_el = this.createContent();
+      this.el.insert({'bottom': content_el});
+    }
+    this.options.terminals = [];
+    this.terminals = [];
+    return content_el;
+  },
+  render: function() {
+    debug("render being called");
+    MySystemNote.superclass.render.call(this);
+    if (this.options.fields) {
+      this.getContentEl().update(this.options.fields.content);
+    }
+  },
+
+  updateFields: function() {
+    debug(($H(this.options.fields).inspect()));
+    if (this.options.fields){
+      this.setContent(this.options.fields.content);
+    }
+  },
+
+  getConfig: function() {
+    var super_options = MySystemNote.superclass.getConfig.call();
+    this.options.name = this.title;
+    this.options.position[0] = this.el.getStyle('left');
+    this.options.position[1] = this.el.getStyle('top');
+    return $H(super_options).merge($H(this.options));
+
+  }
+});
+
+
+
+
+
+
+
 
 /**
  *
@@ -9707,7 +9808,9 @@ var MySystemData = Class.create({
 
   addModule: function(module,addTerminals) {
     if (addTerminals) {
-      module.terminals = MySystemData.defaultTerminals();
+      if (!module.terminals) {
+        module.terminals = MySystemData.defaultTerminals();
+      }
     }
     this.modules.push(module)
   },
@@ -10052,12 +10155,12 @@ MySystemData.defaultTerminals = function() {
                 className: "WiringEditor-module"
             });
 
-            if (module.icon) {
+            if (module.image) {
                 var div = WireIt.cn('div', {
                     className: "WiringEditor-icon-module"
                 });
                 div.appendChild(WireIt.cn('img', {
-                    src: module.icon
+                    src: module.image
                 }));
             } else {
                 var div = WireIt.cn('div', {
@@ -10357,7 +10460,8 @@ MySystemData.defaultTerminals = function() {
             var modules = [];
             var labels = null;
             _data.each(function(item) {
-              if (item.xtype == 'MySystemContainer') {
+              if (item.xtype == 'MySystemContainer'
+              ||  item.xtype == 'MySystemNote') {
                 modules.push(item);
               }
               else if (item.xtype == 'PropEditorFieldLabels') {
