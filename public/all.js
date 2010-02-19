@@ -5919,6 +5919,7 @@ YAHOO.lang.extend(WireIt.Wire, WireIt.CanvasElement, {
     */
    remove: function() {
 
+      this.parentEl.removeChild(this.getLabel().up());
       this.parentEl.removeChild(this.element);
 
       if(this.terminal1 && this.terminal1.removeWire) {
@@ -6135,13 +6136,9 @@ YAHOO.lang.extend(WireIt.Wire, WireIt.CanvasElement, {
         var lastWidth = ctxt.lineWidth;
         var lastStrokeStyle = ctxt.strokeStyle;
 
-        ctxt.lineWidth=1;
-        ctxt.fillStyle = "rgba(255,255,255,0.85)";
-        ctxt.fillRect(center.x - hp - (tWidth/2),center.y - hp - tHeight + desc, tWidth, tHeight);
 
-        ctxt.fillStyle = this.options.color;
-        ctxt.strokeRect(center.x - hp - (tWidth/2),center.y - hp - tHeight + desc, tWidth, tHeight);
-        ctxt.drawTextCenter("sans", fontSize, center.x-hp, center.y-hp, this.options.fields.name);
+
+        this.drawText();
 
         ctxt.fillStyle = lastFillStyle;
         ctxt.lineWidth = lastWidth;
@@ -6397,6 +6394,27 @@ YAHOO.lang.extend(WireIt.Wire, WireIt.CanvasElement, {
       else {
          throw new Error("WireIt.Wire unable to find '"+this.drawingMethod+"' drawing method.");
       }
+   },
+
+   getLabel: function() {
+     var container = this.element.next('.WireIt-Label-Box');
+     if (! container) {
+       container = new Element('div',{'class': 'WireIt-Label-Box'});
+       this.element.insert({'after': container});
+       container.absolutize();
+     }
+     container.clonePosition(this.element);
+     result = container.down('.WireIt-Label')
+     if (! result) {
+       var result = new Element('div',{'class': 'WireIt-Label'});
+       container.insert({'bottom': result});
+     }
+     return result;
+   },
+
+   drawText: function() {
+      this.getLabel().update(this.options.fields.name.wordWrap(45));
+      this.getLabel().setStyle({'color': this.options.color});
    },
 
    /**
@@ -8908,6 +8926,33 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
     };
   };
 
+  /**
+  * Wraps buffer to selected number of characters using string break char
+  * Modified from: http://phpjs.org/functions/wordwrap (License: MIT || GPL)
+  * @method wordWrap(m,b,c)
+  * @args
+  *   wrap_width = how many characters to wrap at,
+  *   break_character = character to use for line breaks.
+  *   cut_words = whether to allow splitting of words. (does this work)
+  *
+  */
+  String.prototype.wordWrap = function(wrap_width, break_character, cut_words){
+      var m = ((arguments.length >= 1) ? arguments[0] : 75   );
+      var b = ((arguments.length >= 3) ? arguments[1] : "\n" );
+      var c = ((arguments.length >= 4) ? arguments[2] : false);
+
+      var i, j, s, r = this.split("\n");
+      if(m > 0) for(i in r){
+          for(s = r[i], r[i] = ""; s.length > m;
+              j = c ? m : (j = s.substr(0, m).match(/\S*$/)).input.length - j[0].length
+              || m,
+              r[i] += s.substr(0, j) + ((s = s.substr(j)).length ? b : "")
+          );
+          r[i] += s;
+      }
+      return r.join("\n");
+  };
+
 
 })();
 (function(){
@@ -8943,6 +8988,7 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
     	return randomstring;
     },
     save: function(_data) {
+        this.writeKey = prompt("Please enter a model name or key: ", this.writeKey);
         this.data = _data;
         var post_to = this.postPath + this.writeKey;
         var xmlhttp = HTTP.newRequest();
@@ -8953,6 +8999,9 @@ YAHOO.lang.extend(WireIt.LayerMap, WireIt.CanvasElement, {
         debug("readKey written: " + this.readKey);
     },
 
+    promptKey: function() {
+
+    },
     load: function(context,callback) {
       if (this.readKey) {
         var key = prompt("Please enter the model to load: ", this.readKey);
@@ -9237,28 +9286,62 @@ MySystemPropEditor = function(options) {
    this.domID = options.domID || "prop_form";
    this.dom_entity = $(this.domID);
    this.formName = options.formName || "prop_form_form";
-   this.selected_color = "#000000"
+   this.selected_color = "#000000";
+   this.formTable = $('form_table');
+
+   var hexColors = [ '#490A3D', '#BD1550', '#E97F02', '#F8CA00', '#8A9B0F'];
+   this.setColorPallet(hexColors);
+
+   var self =  this;
+   this.dom_entity.observe('keydown', function(e){
+     var code;
+     var escapeKey = 27;
+     var returnKey = 13;
+     if (e.keyCode) code = e.keyCode;
+     else if (e.which) code = e.which;
+
+     if (code == returnKey) {
+       if (! e.element().match('textarea')) {
+         e.stop(); //
+       }
+     }
+     if (code == escapeKey) {
+       self.disable();
+     }
+   });
+
+   this.setFieldLabelMap({
+     'name': 'label'
+   });
 };
 
 
 MySystemPropEditor.prototype = {
+  setFieldLabelMap: function(_map) {
+    this.fieldLabelMap = _map;
+  },
+
 
   updateFields: function() {
     this.clearFields();
     var self =  this;
+
+
+
     $H(this.node.options.fields).each(function (pair) {
       var field_name = pair.key;
       var _value = this.node.options.fields[field_name];
       if(field_name !='color') {
-        this.addField(field_name,_value);
+        this.showField(field_name,_value);
       }
     }.bind(this));
 
+
     if (this.node.title) {
-      $('prop_name').update("info about " + this.node.title);
+      $('prop_name').update("edit details");
     }
     else {
-      $('prop_name').update("info for flow");
+      $('prop_name').update("edit energy flow");
     }
     $('prop_form_closer').observe('mouseover',function(e) {
       self.opacity(0.99,'prop_form_closer');
@@ -9269,17 +9352,51 @@ MySystemPropEditor.prototype = {
     $('prop_form_closer').observe('click',function(e) {
       self.disable();
     });
-    this.dom_entity.observe('keydown', function(e){
+  },
 
-      var code;
-      var escapeKey = 27;
-      var returnKey = 13;
-      if (e.keyCode) code = e.keyCode;
-      else if (e.which) code = e.which;
 
-      if (code == escapeKey || code == returnKey) {
-        self.disable();
+  showField: function(field_name,value) {
+
+    if(this.fieldLabelMap[field_name]) {
+
+      var fields = $('prop_fields');
+      var label = new Element('label', {'for': field_name});
+      label.update(this.fieldLabelMap[field_name].label);
+      var type = this.fieldLabelMap[field_name].type || 'text';
+      var style = this.fieldLabelMap[field_name].style
+      var input;
+      if (type =='textarea') {
+        input = new Element('textarea', { 'name': field_name, 'id': field_name});
+        input.insert({'bottom': value});
       }
+      else {
+        input = new Element('input', { 'type': type, 'name': field_name, 'id': field_name, 'value': value});
+      }
+      if (style) {
+        input.addClassName(style);
+      }
+      var label_td = new Element('td', {'align': 'right', 'class': 'input_label' });
+      label_td.setStyle({'align': 'right'});
+      label_td.setStyle({'text-align': 'right'});
+      label_td.insert({'bottom': label});
+
+      var input_td = new Element('td', { 'class': 'input_field' });
+      input_td.insert({'bottom': input});
+
+      var table_row = new Element('tr', { 'class': 'input_row'});
+      table_row.insert({'bottom': label_td});
+      table_row.insert({'bottom': input_td});
+      this.formTable.insert({'bottom': table_row});
+    }
+  },
+
+
+  setColorPallet: function(hexColors) {
+    var pallet = $('palette');
+    hexColors.each(function (c) {
+      var color_div = new Element('div', {'class': 'pallet_element' });
+      color_div.setStyle({backgroundColor: c});
+      pallet.insert({'bottom': color_div});
     });
   },
 
@@ -9292,39 +9409,26 @@ MySystemPropEditor.prototype = {
     });
 
   },
+
   clearFields: function() {
-    $('prop_fields').update('');
+    if (this.formTable && this.formTable.up()) {
+      this.formTable.remove();
+    }
+    this.formTable = new Element('table', {'id': 'form_table'});
+    $(this.formName).insert({'bottom': this.formTable});
   },
 
-  addField: function(field_name,value) {
-    var type = 'text';
-    var fields = $('prop_fields');
-    var label = new Element('label', {'for': field_name});
-    label.update(field_name);
 
-    var input = new Element('input', { 'type': type, 'name': field_name, 'id': field_name, 'value': value});
-
-    var label_td = new Element('td', {'align': 'right', 'class': 'input_label' });
-    label_td.setStyle({'align': 'right'});
-    label_td.setStyle({'text-align': 'right'});
-    label_td.insert({'bottom': label});
-
-    var input_td = new Element('td', { 'class': 'input_field' });
-    input_td.insert({'bottom': input});
-
-    var table_row = new Element('tr', { 'class': 'input_row'});
-    table_row.insert({'bottom': label_td});
-    table_row.insert({'bottom': input_td});
-
-    $('prop_fields').insert({'bottom': table_row});
-  },
-
-  save_values: function() {
+  saveValues: function() {
     var theForm = $(this.formName);
-    var fieldNames = $H(this.node.options.fields).keys();
-    theForm.getInputs('text').each(function (fe) {
-      this.node.options.fields[fe.name] = fe.value;
-    }.bind(this));
+    for (var name in this.fieldLabelMap) {
+      try {
+        this.node.options.fields[name] = theForm[name].getValue();
+      }
+      catch(e) {
+        debug("unable to save property " + name + " for " + this.node);
+      }
+    }
 
     if (this.node.options.fields.color) {
       this.node.options.fields.color = this.selected_color;
@@ -9389,11 +9493,12 @@ MySystemPropEditor.prototype = {
       $(selected_pallete_item).addClassName('selected');
     }
 
+
     this.positionEditor();
     this.showPallet();
     this.positionIcon();
     this.enableClickAway();
-    this.form_observer = new Form.Observer($(this.formName),0.3,this.save_values.bind(this));
+    this.form_observer = new Form.Observer($(this.formName),0.3,this.saveValues.bind(this));
     $(this.formName).focusFirstElement();
   },
 
@@ -9426,7 +9531,7 @@ MySystemPropEditor.prototype = {
           var element = event.element();
           element.addClassName('selected');
           this.selected_color = element.identify();
-          this.save_values();
+          this.saveValues();
         }.bind(this));
         this.node.options.selected=true;
       }
@@ -9439,6 +9544,7 @@ MySystemPropEditor.prototype = {
   positionEditor: function() {
     this.dom_entity.show();
     this.dom_entity.absolutize();
+
     this.dom_entity.clonePosition(this.node_element,{
       setWidth: false,
       setHeight: false,
@@ -9475,47 +9581,6 @@ MySystemPropEditor.prototype = {
 
 
 
-
-/**
- * WireLabel class used by the "mySystem" module
- * @class Container
- * @namespace mySystem
- * @constructor
- */
-MySystemWireLabel = function(options, layer) {
-    MySystemWireLabel.superclass.constructor.call(this, options, layer);
-    this.buildTextArea(options.codeText || "Label me!");
-};
-
-YAHOO.extend(MySystemWireLabel, WireIt.Container, {
-    /**
-    * Create the textarea for the javascript code
-    * @method buildTextArea
-    * @param {String} codeText
-    */
-    buildTextArea: function(codeText) {
-        this.textarea = WireIt.cn('textarea', null, {
-            width: "70%",
-            height: "20px",
-            border: "0",
-            padding: "5px"
-        },
-        codeText);
-        this.setBody(this.textarea);
-        YAHOO.util.Event.addListener(this.textarea, 'change', this.createTerminals, this, true);
-    },
-
-    /**
-    * Extend the getConfig to add the "codeText" property
-    * @method getConfig
-    */
-    getConfig: function() {
-        var obj = MySystemWireLabel.superclass.getConfig.call(this);
-        obj.codeText = this.textarea.value;
-        return obj;
-    }
-
-});
 
 /**
  * MySystem Container. Has an image. and double_click beahvor.
@@ -9569,7 +9634,9 @@ YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
     if(newTitle) {
       var this_el = this.el
       var title_el = $(this_el).down('.title')
-      this.title = newTitle;
+      title_el.absolutize();
+      var wordWrapChars = 30;
+      this.title = newTitle.wordWrap(wordWrapChars, "\n");
       this.options.name = this.title;
       this.options.fields.name = this.title;
       if(!title_el) {
@@ -9577,19 +9644,23 @@ YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
         this_el.insert(title_el);
       }
       title_el.update(this.title);
+      var leftOffset = 0;
+      if (title_el.getWidth() > title_el.up().getWidth()) {
+        leftOffset = (title_el.getWidth() - title_el.up().getWidth())/2;
+      }
+      title_el.clonePosition(title_el.up(), {setTop: false, setLeft:true, setWidth: false, setHeight: false,offsetLeft:leftOffset});
     }
   },
   createTitle: function() {
-    return new Element('div', {
-      'class': 'title'
-    });
+    return new Element('div', {'class': 'title' });
   },
   render: function() {
+    debug("render being called");
     MySystemContainer.superclass.render.call(this);
     var this_el = this.el
     var title_el = $(this_el).down('.title')
     if(!title_el) {
-      title_el = this.createTitle()
+      title_el = this.createTitle();
       this_el.insert(title_el);
       title_el.update(this.title);
     }
@@ -9804,11 +9875,6 @@ MySystemData.defaultTerminals = function() {
         this.numLayers = 1;
         this.propEditor = new MySystemPropEditor({});
 
-        /**
-        * Container DOM element
-        * @property el
-        */
-        this.el = Dom.get(data.parentEl);
 
         /**
        * @property layout
@@ -10057,13 +10123,6 @@ MySystemData.defaultTerminals = function() {
             newButton.on("click", this.onNew, this, true);
 
 
-
-            var helpButton = new widget.Button({
-                label: "help",
-                id: "WiringEditor-helpButton",
-                container: toolbar
-            });
-            helpButton.on("click", this.onHelp, this, true);
         },
         /**
         * Enable the save and load buttons
@@ -10130,7 +10189,7 @@ MySystemData.defaultTerminals = function() {
         },
 
         /**
-         * @method onSave
+         * @method onLoad
          */
          onLoad: function() {
            if (this.dataService) {
@@ -10241,14 +10300,14 @@ MySystemData.defaultTerminals = function() {
 })();
 (function(){
 
-  this.MySystem = function( jsonURL ){
-    this.init( jsonURL );
+  this.MySystem = function( moduleUrl ){
+    this.init( moduleUrl );
     this.interceptKeys();
   };
 
   MySystem.prototype = {
     init: function( jsonURL ) {
-      this.loadModules( jsonURL );
+      this.loadPreferences( jsonURL );
     },
 
     setDataService: function(ds) {
@@ -10265,7 +10324,7 @@ MySystemData.defaultTerminals = function() {
         if (e.keyCode) code = e.keyCode;
         else if (e.which) code = e.which;
         if (code == 8 || code == 127) {
-          if ( !element.match('input')) {
+          if ((! element.match('input')) && (! element.match('textarea'))) {
               e.stop();
           }
         }
@@ -10283,26 +10342,56 @@ MySystemData.defaultTerminals = function() {
       this.editor.dataService = this.dataService;
     },
 
-    loadModules: function(filename) {
+    loadPreferences: function(filename) {
       var self = this;
-      debug("calling loadModules (with GET)" + filename);
+      debug("calling loadPreferences (with GET) " + filename);
       new Ajax.Request(filename, {
         asynchronous: false,
         method: 'GET',
         onSuccess: function(rsp) {
-          var text = rsp.responseText;
-          var _data = eval(text);
-          debug("content: "+ text);
-          debug("data: " + _data);
-          self.data = new MySystemData();
-          self.data.setData(_data,[],true);
+          var _data = null;
+          var modules = [];
+          var labels = null;
+          try {
+            var _data = rsp.responseText.evalJSON();
+            var modules = [];
+            var labels = null;
+            _data.each(function(item) {
+              if (item.xtype == 'MySystemContainer') {
+                modules.push(item);
+              }
+              else if (item.xtype == 'PropEditorFieldLabels') {
+                labels = item.labels;
+              }
+              else if (item.xtype == 'AssignmentInformation') {
+                self.loadAssignmentInfo(item);
+              }
+            });
+          }
+          catch(exception) {
+            debug("unable to load / read file: " + filename);
+            debug(exception);
+          }
+          self.loadModules(modules);
           self.setEditor();
-          self.loaded=true;
+          if (labels) {
+            self.editor.propEditor.setFieldLabelMap(labels);
+          }
+          self.loaded = true;
         },
         onFailure: function(req,err) {
           debug("failed!");
         }
       });
+    },
+
+    loadModules: function(modules) {
+      this.data = new MySystemData();
+      this.data.setData(modules, [], true);
+    },
+
+    loadAssignmentInfo : function(item) {
+      $('goal').update(item.fields.goal);
     },
 
     /**
