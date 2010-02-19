@@ -21,3 +21,5 @@ Gems installed using 'appcfg.rb gem install sinatra dm-appengine' are checked in
 # try out the app with ruby ./app.rb  or at the console with irb require 'config'
 # run in developer mode with "dev_appserver.rb ." (intsalled with google-appengine gem)
 # deploy the application with "appcfg.rb update ."
+# the application will be available at http://ccmysystem.appspot.com/mysystem.html
+
