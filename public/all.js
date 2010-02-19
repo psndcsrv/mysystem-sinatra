@@ -9288,8 +9288,14 @@ MySystemPropEditor = function(options) {
    this.selected_color = "#000000";
    this.formTable = $('form_table');
 
-   var hexColors = [ '#490A3D', '#BD1550', '#E97F02', '#F8CA00', '#8A9B0F'];
-   this.setColorPallet(hexColors);
+   var hexColors = {
+     '#490A3D' : '',
+     '#BD1550' : '',
+     '#E97F02' : '',
+     '#F8CA00' : '',
+     '#8A9B0F' : ''
+    };
+   this.setArrows(hexColors);
 
    var self =  this;
    this.dom_entity.observe('keydown', function(e){
@@ -9400,13 +9406,21 @@ MySystemPropEditor.prototype = {
   },
 
 
-  setColorPallet: function(hexColors) {
+  setArrows: function(arrows) {
     var pallet = $('palette');
-    hexColors.each(function (c) {
+    pallet.update('<h4>Flow Type</h4>');
+    var arrow = null;
+    for (arrow in arrows) {
       var color_div = new Element('div', {'class': 'pallet_element' });
-      color_div.setStyle({backgroundColor: c});
+
+      color_div.setStyle({backgroundColor: arrow});
+      if(arrows[arrow]) {
+        color_div.setStyle({'width' : 'auto'});
+        color_div.setStyle({'color' : 'white'});
+        color_div.update(arrows[arrow]);
+      }
       pallet.insert({'bottom': color_div});
-    });
+    }
   },
 
   opacity: function(opacity, dom_id) {
@@ -9498,15 +9512,15 @@ MySystemPropEditor.prototype = {
     this.updateFields();
 
     this.selected_color = this.node.options.fields.color || "color2";
-    var selected_pallete_item = $(this.selected_color);
-    if (selected_pallete_item) {
+    var selected_palette_item = $(this.selected_color);
+    if (selected_palette_item) {
       this.deselect();
-      $(selected_pallete_item).addClassName('selected');
+      $(selected_palette_item).addClassName('selected');
     }
 
 
     this.positionEditor();
-    this.showPallet();
+    this.showPalette();
     this.positionIcon();
     this.enableClickAway();
     this.form_observer = new Form.Observer($(this.formName),0.3,this.saveValues.bind(this));
@@ -9534,7 +9548,7 @@ MySystemPropEditor.prototype = {
     }
   },
 
-  showPallet: function() {
+  showPalette: function() {
     if (this.node.options.fields.color) {
         $('palette').show();
         $('palette').observe('click', function (event) {
@@ -9667,7 +9681,6 @@ YAHOO.lang.extend(MySystemContainer, WireIt.ImageContainer, {
     return new Element('div', {'class': 'title' });
   },
   render: function() {
-    debug("render being called");
     MySystemContainer.superclass.render.call(this);
     var this_el = this.el
     var title_el = $(this_el).down('.title')
@@ -10454,6 +10467,7 @@ MySystemData.defaultTerminals = function() {
         onSuccess: function(rsp) {
           var _data = null;
           var modules = [];
+          var arrows = null;
           var labels = null;
           try {
             var _data = rsp.responseText.evalJSON();
@@ -10466,6 +10480,9 @@ MySystemData.defaultTerminals = function() {
               }
               else if (item.xtype == 'PropEditorFieldLabels') {
                 labels = item.labels;
+              }
+              else if (item.xtype == 'PropEditorArrows') {
+                arrows = item.arrows;
               }
               else if (item.xtype == 'AssignmentInformation') {
                 self.loadAssignmentInfo(item);
@@ -10480,6 +10497,9 @@ MySystemData.defaultTerminals = function() {
           self.setEditor();
           if (labels) {
             self.editor.propEditor.setFieldLabelMap(labels);
+          }
+          if (arrows) {
+            self.editor.propEditor.setArrows(arrows);
           }
           self.loaded = true;
         },
