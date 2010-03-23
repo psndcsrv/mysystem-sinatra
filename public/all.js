@@ -7359,6 +7359,14 @@ YAHOO.extend(WireIt.util.DD, YAHOO.util.DD, {
     * @method onDrag
     */
    onDrag: function(e) {
+
+      if(this._domRef.offsetTop<0){
+        this._domRef.style.top=0;
+      }
+      if(this._domRef.offsetLeft<0){
+        this._domRef.style.left=0;
+      }
+
       var terminalList = YAHOO.lang.isArray(this._WireItTerminals) ? this._WireItTerminals : (this._WireItTerminals.isWireItTerminal ? [this._WireItTerminals] : []);
       for(var i = 0 ; i < terminalList.length ; i++) {
          if(terminalList[i].wires) {
@@ -7620,6 +7628,7 @@ WireIt.Container.prototype = {
       Event.addListener(this.el, "mousedown", this.onMouseDown, this, true);
 
       if(this.options.ddHandle) {
+
       	this.ddHandle = WireIt.cn('div', {className: this.options.ddHandleClassName});
       	this.el.appendChild(this.ddHandle);
 
@@ -9447,7 +9456,7 @@ MySystemPropEditor.prototype = {
     for (var name in this.fieldLabelMap) {
       try {
         if (this.node.options.fields[name]) {
-          this.node.options.fields[name] = theForm[name].getValue();
+          this.node.options.fields[name] = theForm[name].getValue()||"(type-here)"; // If no value exists, return the (type-here) value
         }
       }
       catch(e) {
@@ -10561,6 +10570,7 @@ MySystemData.defaultTerminals = function() {
       else {
         self.collapse();
       }
+      event.stop();
     });
 
     this.expand();
